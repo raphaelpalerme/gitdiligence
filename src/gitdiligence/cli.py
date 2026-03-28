@@ -2,6 +2,7 @@
 
 Commandes :
 - analyze <owner/repo> : lance une analyse de due diligence
+- eval : lance l'évaluation sur les repos de référence
 """
 
 import json
@@ -90,6 +91,21 @@ def analyze(
     console.print(Markdown(md))
     console.print(f"\n[dim]Tokens: {state.total_tokens:,} | Étapes: {len(state.steps)}[/dim]")
     console.print(f"[dim]Rapport sauvegardé: {md_path} + {json_path}[/dim]")
+
+
+@app.command()
+def eval(
+    model: str = typer.Option("claude-sonnet-4-6", help="Modèle Claude à utiliser"),
+):
+    """Lance l'évaluation sur les repos de référence."""
+    _load_env()
+
+    from gitdiligence.eval.runner import run_eval
+
+    results = run_eval(model=model)
+    failed = [r for r in results if not r.passed]
+    if failed:
+        raise typer.Exit(1)
 
 
 def main():
