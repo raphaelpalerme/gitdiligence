@@ -33,20 +33,24 @@ def call_claude(
     system: str,
     model: str = "claude-sonnet-4-6",
     max_tokens: int = 16000,
+    extra_tools: list[dict] | None = None,
 ) -> anthropic.types.Message:
     """Appelle l'API Claude avec des messages et des outils.
 
+    extra_tools : outils déjà au format Claude (ex: generate_report).
     Retourne la réponse brute de l'API. C'est la boucle ReAct (react.py)
     qui décidera quoi faire avec.
     """
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+    all_tools = tools_to_claude_format(tools) + (extra_tools or [])
 
     response = client.messages.create(
         model=model,
         max_tokens=max_tokens,
         system=system,
         messages=messages,
-        tools=tools_to_claude_format(tools),
+        tools=all_tools,
     )
 
     return response
