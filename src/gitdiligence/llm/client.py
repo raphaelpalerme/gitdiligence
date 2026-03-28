@@ -1,0 +1,52 @@
+"""Client pour l'API Claude avec support tool_use.
+
+Ce module fait le pont entre nos outils (Tool) et l'API Anthropic.
+Il convertit nos Tool en format Claude et envoie les requêtes.
+"""
+
+import os
+
+import anthropic
+
+from gitdiligence.tools.base import Tool
+
+
+def tools_to_claude_format(tools: list[Tool]) -> list[dict]:
+    """Convertit nos outils au format attendu par l'API Claude.
+
+    Claude attend : {"name": ..., "description": ..., "input_schema": ...}
+    Notre Tool a : name, description, parameters
+    """
+    return [
+        {
+            "name": tool.name,
+            "description": tool.description,
+            "input_schema": tool.parameters,
+        }
+        for tool in tools
+    ]
+
+
+def call_claude(
+    messages: list[dict],
+    tools: list[Tool],
+    system: str,
+    model: str = "claude-sonnet-4-6",
+    max_tokens: int = 16000,
+) -> anthropic.types.Message:
+    """Appelle l'API Claude avec des messages et des outils.
+
+    Retourne la réponse brute de l'API. C'est la boucle ReAct (react.py)
+    qui décidera quoi faire avec.
+    """
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+    response = client.messages.create(
+        model=model,
+        max_tokens=max_tokens,
+        system=system,
+        messages=messages,
+        tools=tools_to_claude_format(tools),
+    )
+
+    return response
