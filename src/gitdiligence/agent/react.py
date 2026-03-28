@@ -38,15 +38,17 @@ def _extract_thought(response) -> str:
     return "\n".join(parts)
 
 
-def _extract_tool_call(response) -> tuple[str, dict, str] | None:
-    """Extrait le premier appel d'outil de la réponse Claude.
+def _extract_tool_calls(response) -> list[tuple[str, dict, str]]:
+    """Extrait tous les appels d'outils de la réponse Claude.
 
-    Retourne (tool_name, tool_input, tool_use_id) ou None.
+    Claude peut demander plusieurs outils en une seule réponse.
+    Retourne une liste de (tool_name, tool_input, tool_use_id).
     """
+    calls = []
     for block in response.content:
         if block.type == "tool_use":
-            return block.name, block.input, block.id
-    return None
+            calls.append((block.name, block.input, block.id))
+    return calls
 
 
 def run_agent(
@@ -103,83 +105,84 @@ def run_agent(
             "content": response.content,
         })
 
-        # Extrait l'appel d'outil
-        tool_call = _extract_tool_call(response)
+        # Extrait tous les appels d'outils
+        tool_calls = _extract_tool_calls(response)
 
         # Pas d'appel d'outil → Claude a fini sans rapport (ne devrait pas arriver)
-        if tool_call is None:
+        if not tool_calls:
             if verbose:
                 print("Claude a terminé sans appeler generate_report.")
             break
 
-        tool_name, tool_input, tool_use_id = tool_call
-        if verbose:
-            print(f"Tool: {tool_name}({tool_input})")
+        # Exécute chaque outil et collecte les résultats
+        tool_results = []
+        done = False
 
-        # Cas spécial : generate_report → valide et termine
-        if tool_name == "generate_report":
-            try:
-                state.report = DiligenceReport(**tool_input)
-                # Confirme à Claude que le rapport est valide
-                state.messages.append({
-                    "role": "user",
-                    "content": [{
+        for tool_name, tool_input, tool_use_id in tool_calls:
+            if verbose:
+                print(f"Tool: {tool_name}({tool_input})")
+
+            # Cas spécial : generate_report → valide et termine
+            if tool_name == "generate_report":
+                try:
+                    state.report = DiligenceReport(**tool_input)
+                    tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": tool_use_id,
                         "content": "Rapport validé avec succès.",
-                    }],
-                })
-                state.add_step(Step(
-                    tool_name=tool_name,
-                    tool_input=tool_input,
-                    result="Rapport validé.",
-                    thought=thought,
-                ))
-                if verbose:
-                    print(f"Rapport généré ! Verdict: {state.report.verdict}")
-                break
+                    })
+                    state.add_step(Step(
+                        tool_name=tool_name,
+                        tool_input=tool_input,
+                        result="Rapport validé.",
+                        thought=thought,
+                    ))
+                    if verbose:
+                        print(f"Rapport généré ! Verdict: {state.report.verdict}")
+                    done = True
 
-            except ValidationError as e:
-                # Rapport invalide → renvoie l'erreur à Claude pour qu'il corrige
-                error_msg = f"Rapport invalide : {e}"
-                state.messages.append({
-                    "role": "user",
-                    "content": [{
+                except ValidationError as e:
+                    error_msg = f"Rapport invalide : {e}"
+                    tool_results.append({
                         "type": "tool_result",
                         "tool_use_id": tool_use_id,
                         "content": error_msg,
                         "is_error": True,
-                    }],
-                })
-                if verbose:
-                    print(f"Erreur de validation : {e}")
+                    })
+                    if verbose:
+                        print(f"Erreur de validation : {e}")
                 continue
 
-        # Outil normal → exécute et renvoie le résultat
-        try:
-            tool = registry.get_tool(tool_name)
-            result = tool.execute(**tool_input)
-        except Exception as e:
-            result = f"Erreur lors de l'exécution de {tool_name}: {e}"
+            # Outil normal → exécute
+            try:
+                tool = registry.get_tool(tool_name)
+                result = tool.execute(**tool_input)
+            except Exception as e:
+                result = f"Erreur lors de l'exécution de {tool_name}: {e}"
 
-        state.add_step(Step(
-            tool_name=tool_name,
-            tool_input=tool_input,
-            result=result,
-            thought=thought,
-        ))
+            state.add_step(Step(
+                tool_name=tool_name,
+                tool_input=tool_input,
+                result=result,
+                thought=thought,
+            ))
 
-        # Renvoie le résultat à Claude
-        state.messages.append({
-            "role": "user",
-            "content": [{
+            tool_results.append({
                 "type": "tool_result",
                 "tool_use_id": tool_use_id,
                 "content": result,
-            }],
+            })
+
+            if verbose:
+                print(f"Result: {result[:200]}...")
+
+        # Renvoie tous les résultats à Claude en un seul message
+        state.messages.append({
+            "role": "user",
+            "content": tool_results,
         })
 
-        if verbose:
-            print(f"Result: {result[:200]}...")
+        if done:
+            break
 
     return state
