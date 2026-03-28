@@ -70,6 +70,12 @@ class GetFileTree(Tool):
 
         # On ne garde que les chemins des fichiers (pas les dossiers)
         paths = [item["path"] for item in data["tree"] if item["type"] == "blob"]
+
+        # Tronque si trop de fichiers (évite d'exploser les tokens)
+        max_files = 500
+        if len(paths) > max_files:
+            truncated = paths[:max_files]
+            return "\n".join(truncated) + f"\n\n... ({len(paths)} fichiers au total, tronqué à {max_files})"
         return "\n".join(paths)
 
 

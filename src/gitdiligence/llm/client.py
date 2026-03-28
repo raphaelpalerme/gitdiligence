@@ -5,6 +5,7 @@ Il convertit nos Tool en format Claude et envoie les requêtes.
 """
 
 import os
+import time
 
 import anthropic
 
@@ -45,12 +46,21 @@ def call_claude(
 
     all_tools = tools_to_claude_format(tools) + (extra_tools or [])
 
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        messages=messages,
-        tools=all_tools,
-    )
-
-    return response
+    # Retry automatique sur rate limit (429)
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=messages,
+                tools=all_tools,
+            )
+            return response
+        except anthropic.RateLimitError:
+            if attempt == max_retries - 1:
+                raise
+            wait = 60 * (attempt + 1)  # 60s, 120s, 180s
+            print(f"Rate limit atteint. Attente de {wait}s...")
+            time.sleep(wait)
