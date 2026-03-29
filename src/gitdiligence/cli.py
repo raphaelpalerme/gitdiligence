@@ -14,6 +14,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from gitdiligence.agent.react import run_agent
+from gitdiligence.llm.client import detect_provider
 from gitdiligence.report.renderer import render_markdown
 
 app = typer.Typer(help="Agent IA de due diligence technique pour repos GitHub")
@@ -34,7 +35,7 @@ def _load_env():
 @app.command()
 def analyze(
     repo: str = typer.Argument(help="Repo à analyser (format: owner/repo)"),
-    model: str = typer.Option("claude-sonnet-4-6", help="Modèle Claude à utiliser"),
+    model: str = typer.Option("gemini-2.5-flash", help="Modèle LLM (gemini-2.5-flash, claude-sonnet-4-6, etc.)"),
     max_steps: int = typer.Option(25, help="Nombre max d'itérations ReAct"),
     output_dir: str = typer.Option("./reports", help="Dossier de sortie"),
     verbose: bool = typer.Option(False, help="Affiche le raisonnement en temps réel"),
@@ -50,7 +51,11 @@ def analyze(
     owner, repo_name = repo.split("/", 1)
 
     # Vérifie les clés API
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    provider = detect_provider(model)
+    if provider == "gemini" and not os.environ.get("GOOGLE_API_KEY"):
+        console.print("[red]GOOGLE_API_KEY manquant. Ajoute-le dans .env[/red]")
+        raise typer.Exit(1)
+    if provider == "claude" and not os.environ.get("ANTHROPIC_API_KEY"):
         console.print("[red]ANTHROPIC_API_KEY manquant. Ajoute-le dans .env[/red]")
         raise typer.Exit(1)
     if not os.environ.get("GITHUB_TOKEN"):
@@ -95,7 +100,7 @@ def analyze(
 
 @app.command()
 def eval(
-    model: str = typer.Option("claude-sonnet-4-6", help="Modèle Claude à utiliser"),
+    model: str = typer.Option("gemini-2.5-flash", help="Modèle LLM (gemini-2.5-flash, claude-sonnet-4-6, etc.)"),
 ):
     """Lance l'évaluation sur les repos de référence."""
     _load_env()

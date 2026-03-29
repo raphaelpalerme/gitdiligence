@@ -2,24 +2,24 @@
 
 Implémente le cycle : thought → tool call → observation → repeat
 jusqu'à ce que l'agent appelle generate_report ou atteigne le max d'itérations.
+Fonctionne avec Claude et Gemini grâce à la couche d'abstraction dans llm/client.py.
 """
 
 from pydantic import ValidationError
 
 from gitdiligence.agent.prompts import build_system_prompt
 from gitdiligence.agent.state import AgentState, Step
-from gitdiligence.llm.client import call_claude
+from gitdiligence.llm.client import call_llm, format_assistant_message, format_tool_results
 from gitdiligence.report.schema import DiligenceReport
-from gitdiligence.tools.base import Tool
 from gitdiligence.tools import registry
 
 MAX_ITERATIONS = 25
 
 
 def _build_generate_report_tool() -> dict:
-    """Construit la définition de l'outil generate_report pour Claude.
+    """Construit la définition de l'outil generate_report.
 
-    Utilise le JSON Schema généré par Pydantic — comme ça Claude sait
+    Utilise le JSON Schema généré par Pydantic — comme ça le LLM sait
     exactement quel format produire.
     """
     return {
@@ -29,32 +29,10 @@ def _build_generate_report_tool() -> dict:
     }
 
 
-def _extract_thought(response) -> str:
-    """Extrait le texte de raisonnement de la réponse Claude."""
-    parts = []
-    for block in response.content:
-        if block.type == "text":
-            parts.append(block.text)
-    return "\n".join(parts)
-
-
-def _extract_tool_calls(response) -> list[tuple[str, dict, str]]:
-    """Extrait tous les appels d'outils de la réponse Claude.
-
-    Claude peut demander plusieurs outils en une seule réponse.
-    Retourne une liste de (tool_name, tool_input, tool_use_id).
-    """
-    calls = []
-    for block in response.content:
-        if block.type == "tool_use":
-            calls.append((block.name, block.input, block.id))
-    return calls
-
-
 def run_agent(
     owner: str,
     repo: str,
-    model: str = "claude-sonnet-4-6",
+    model: str = "gemini-2.5-flash",
     max_steps: int = MAX_ITERATIONS,
     verbose: bool = False,
 ) -> AgentState:
@@ -79,8 +57,8 @@ def run_agent(
         if verbose:
             print(f"\n--- Itération {iteration + 1}/{max_steps} ---")
 
-        # Appel à Claude
-        response = call_claude(
+        # Appel au LLM (Claude ou Gemini selon le modèle)
+        response = call_llm(
             messages=state.messages,
             tools=tools,
             system=system,
@@ -94,48 +72,41 @@ def run_agent(
             output_tokens=response.usage.output_tokens,
         )
 
-        # Extrait le raisonnement
-        thought = _extract_thought(response)
-        if verbose and thought:
-            print(f"Thought: {thought[:200]}...")
+        # Raisonnement
+        if verbose and response.text:
+            print(f"Thought: {response.text[:200]}...")
 
-        # Ajoute la réponse de Claude aux messages
-        state.messages.append({
-            "role": "assistant",
-            "content": response.content,
-        })
+        # Ajoute la réponse du LLM aux messages
+        state.messages.append(format_assistant_message(response))
 
-        # Extrait tous les appels d'outils
-        tool_calls = _extract_tool_calls(response)
-
-        # Pas d'appel d'outil → Claude a fini sans rapport (ne devrait pas arriver)
-        if not tool_calls:
+        # Pas d'appel d'outil → le LLM a fini sans rapport
+        if not response.tool_calls:
             if verbose:
-                print("Claude a terminé sans appeler generate_report.")
+                print("Le LLM a terminé sans appeler generate_report.")
             break
 
         # Exécute chaque outil et collecte les résultats
-        tool_results = []
+        results = []
         done = False
 
-        for tool_name, tool_input, tool_use_id in tool_calls:
+        for tc in response.tool_calls:
             if verbose:
-                print(f"Tool: {tool_name}({tool_input})")
+                print(f"Tool: {tc.name}({tc.input})")
 
             # Cas spécial : generate_report → valide et termine
-            if tool_name == "generate_report":
+            if tc.name == "generate_report":
                 try:
-                    state.report = DiligenceReport(**tool_input)
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_id,
+                    state.report = DiligenceReport(**tc.input)
+                    results.append({
+                        "name": tc.name,
+                        "id": tc.id,
                         "content": "Rapport validé avec succès.",
                     })
                     state.add_step(Step(
-                        tool_name=tool_name,
-                        tool_input=tool_input,
+                        tool_name=tc.name,
+                        tool_input=tc.input,
                         result="Rapport validé.",
-                        thought=thought,
+                        thought=response.text,
                     ))
                     if verbose:
                         print(f"Rapport généré ! Verdict: {state.report.verdict}")
@@ -143,9 +114,9 @@ def run_agent(
 
                 except ValidationError as e:
                     error_msg = f"Rapport invalide : {e}"
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_id,
+                    results.append({
+                        "name": tc.name,
+                        "id": tc.id,
                         "content": error_msg,
                         "is_error": True,
                     })
@@ -155,32 +126,29 @@ def run_agent(
 
             # Outil normal → exécute
             try:
-                tool = registry.get_tool(tool_name)
-                result = tool.execute(**tool_input)
+                tool = registry.get_tool(tc.name)
+                result = tool.execute(**tc.input)
             except Exception as e:
-                result = f"Erreur lors de l'exécution de {tool_name}: {e}"
+                result = f"Erreur lors de l'exécution de {tc.name}: {e}"
 
             state.add_step(Step(
-                tool_name=tool_name,
-                tool_input=tool_input,
+                tool_name=tc.name,
+                tool_input=tc.input,
                 result=result,
-                thought=thought,
+                thought=response.text,
             ))
 
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tool_use_id,
+            results.append({
+                "name": tc.name,
+                "id": tc.id,
                 "content": result,
             })
 
             if verbose:
                 print(f"Result: {result[:200]}...")
 
-        # Renvoie tous les résultats à Claude en un seul message
-        state.messages.append({
-            "role": "user",
-            "content": tool_results,
-        })
+        # Renvoie tous les résultats au LLM en un seul message
+        state.messages.append(format_tool_results(results, response.provider))
 
         if done:
             break
