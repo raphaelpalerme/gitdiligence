@@ -17,8 +17,8 @@ def _make_report():
                 name=f"Dimension {i}",
                 score=8,
                 findings=[
-                    Finding(detail="Bon point", positive=True),
-                    Finding(detail="Point faible", positive=False),
+                    Finding(detail="Good point", positive=True),
+                    Finding(detail="Weakness", positive=False),
                 ],
                 recommendation="Conseil utile",
             )
@@ -26,7 +26,7 @@ def _make_report():
         ],
         overall_score=8.0,
         verdict="Strong Invest",
-        summary="Excellent projet.",
+        summary="Excellent project.",
     )
 
 
@@ -45,12 +45,12 @@ def test_render_contains_dimensions():
 def test_render_contains_findings():
     """The Markdown contains the findings with + and -."""
     md = render_markdown(_make_report())
-    assert "+ Bon point" in md
-    assert "- Point faible" in md
+    assert "+ Good point" in md
+    assert "- Weakness" in md
 
 
 def test_render_contains_verdict():
     """The Markdown contains the final verdict."""
     md = render_markdown(_make_report())
     assert "Strong Invest" in md
-    assert "Excellent projet." in md
+    assert "Excellent project." in md

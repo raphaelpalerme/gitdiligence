@@ -61,9 +61,8 @@ class GetCommitActivity(Tool):
         repo = kwargs["repo"]
         data = github_get(f"/repos/{owner}/{repo}/stats/commit_activity")
 
-        # The API returns 52 weeks of data (oldest first)
-        # Summarize: total commits, active weeks, recent activity
-        if not data:
+        # The API may return empty data (202 Accepted = still computing)
+        if not data or not isinstance(data, list):
             return json.dumps({"error": "No activity data available (GitHub may still be computing)"})
 
         total_commits = sum(week["total"] for week in data)

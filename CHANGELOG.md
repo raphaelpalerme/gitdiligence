@@ -15,7 +15,6 @@
 - Sample report (Flask) in README
 
 ### Changed
-- Everything switched to English (code, docs, prompts, reports)
 - Default model switched from Claude Sonnet to Gemini 2.5 Flash (free)
 - File tree truncated to 500 files for large repos
 - Retry on rate limit (60s backoff)
