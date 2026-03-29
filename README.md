@@ -10,7 +10,7 @@ GitDiligence utilise un agent ReAct (Reasoning + Acting) qui :
 2. Analyse les dépendances, la CI/CD, la sécurité, la documentation
 3. Produit un rapport avec 8 dimensions notées de 1 à 10 et un verdict final
 
-L'agent est implémenté from scratch avec l'API Claude (tool_use natif), sans framework LLM.
+L'agent est implémenté from scratch (pas de LangChain), avec support multi-provider : **Gemini** (gratuit) et **Claude** (payant, meilleure qualité).
 
 ## Les 8 dimensions
 
@@ -30,7 +30,7 @@ Verdicts possibles : `Strong Invest` · `Invest with Caution` · `Pass` · `Need
 ## Installation
 
 ```bash
-git clone https://github.com/<your-username>/gitdiligence.git
+git clone https://github.com/raphaelpalerme/gitdiligence.git
 cd gitdiligence
 python -m venv .venv
 source .venv/bin/activate
@@ -42,21 +42,24 @@ pip install -e ".[dev]"
 Crée un fichier `.env` à la racine :
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=AIza...    # Gratuit — https://aistudio.google.com
 GITHUB_TOKEN=ghp_...
+
+# Optionnel — seulement pour --model claude-sonnet-4-6
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ## Utilisation
 
 ```bash
-# Analyser un repo
+# Analyser un repo (Gemini, gratuit)
 gitdiligence analyze pallets/flask
 
 # Avec le raisonnement en temps réel
 gitdiligence analyze pallets/flask --verbose
 
-# Changer de modèle
-gitdiligence analyze pallets/flask --model claude-opus-4-6
+# Utiliser Claude (payant, meilleure qualité)
+gitdiligence analyze pallets/flask --model claude-sonnet-4-6
 
 # Lancer l'évaluation
 gitdiligence eval
@@ -67,7 +70,7 @@ Les rapports sont sauvegardés dans `./reports/` (Markdown + JSON).
 ## Stack
 
 - **Agent** : boucle ReAct from scratch (pas de LangChain)
-- **LLM** : API Claude avec tool_use natif
+- **LLM** : Gemini (gratuit) ou Claude (payant), multi-provider avec abstraction normalisée
 - **GitHub** : httpx + GitHub REST API v3
 - **Validation** : Pydantic (rapport + JSON Schema pour les outils)
 - **CLI** : Typer + Rich
@@ -81,7 +84,8 @@ src/gitdiligence/
 │   ├── state.py        # State management (steps, tokens)
 │   └── react.py        # Boucle ReAct
 ├── llm/
-│   └── client.py       # Client API Claude
+│   ├── client.py       # Dispatcher multi-provider (Claude + Gemini)
+│   └── models.py       # Types normalisés (LLMResponse, ToolCall)
 ├── tools/
 │   ├── base.py         # Classe abstraite Tool
 │   ├── registry.py     # Registre d'outils
