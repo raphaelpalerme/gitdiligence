@@ -52,6 +52,17 @@ Improve the CLI experience before publishing.
 - [ ] Error messages — clear, actionable messages for common failures (bad repo, no token, rate limit)
 - [ ] `--json` flag — output report as JSON to stdout (for piping)
 - [ ] Type annotations — fix Pylance warnings in llm/client.py (strict typing)
+### CI & Security hardening
+- [ ] SHA-pin GitHub Actions in ci.yml (supply chain security)
+- [ ] Add uv.lock for reproducible installs
+- [ ] Add mypy or pyright to CI pipeline
+- [ ] CI matrix build for Python 3.11 + 3.12
+- [ ] Branch protection check in check_security tool
+
+### Project polish
+- [ ] Fix GitHub repo description (currently in French)
+- [ ] CODE_OF_CONDUCT.md
+- [ ] GitHub issue templates (.github/ISSUE_TEMPLATE/)
 
 ---
 
