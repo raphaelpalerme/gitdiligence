@@ -209,22 +209,18 @@ def _call_gemini(
     gemini_tools = [types.Tool(function_declarations=all_declarations)]
 
     # Convertit les messages au format Gemini
-    # Le premier message est toujours "user" avec du texte
+    # Les messages sont soit au format natif Gemini (via format_assistant_message
+    # / format_tool_results), soit le premier message user en string.
     gemini_contents = []
     for msg in messages:
         if "parts" in msg:
             # Déjà au format Gemini (messages précédents)
             gemini_contents.append(msg)
-        elif msg["role"] == "user":
-            if isinstance(msg["content"], str):
-                gemini_contents.append({
-                    "role": "user",
-                    "parts": [types.Part.from_text(text=msg["content"])],
-                })
-            # tool_result messages are already handled via format_tool_results
-        elif msg["role"] == "assistant":
-            # Premier passage : pas encore de messages assistant au format Gemini
-            pass
+        elif msg["role"] == "user" and isinstance(msg["content"], str):
+            gemini_contents.append({
+                "role": "user",
+                "parts": [types.Part.from_text(text=msg["content"])],
+            })
 
     max_retries = 3
     for attempt in range(max_retries):

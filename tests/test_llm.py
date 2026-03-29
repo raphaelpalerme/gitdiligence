@@ -10,6 +10,7 @@ from gitdiligence.llm.client import (
     tools_to_gemini_format,
     detect_provider,
     _extra_tools_to_gemini,
+    _resolve_refs,
 )
 
 
@@ -76,3 +77,50 @@ def test_extra_tools_to_gemini():
     assert result[0]["name"] == "report"
     assert result[0]["parameters"] == {"type": "object"}
     assert "input_schema" not in result[0]
+
+
+# --- Resolve refs ---
+
+
+def test_resolve_refs():
+    """Vérifie que les $ref sont inlinées et $defs supprimé."""
+    schema = {
+        "type": "object",
+        "properties": {
+            "info": {"$ref": "#/$defs/RepoInfo"},
+        },
+        "$defs": {
+            "RepoInfo": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+            }
+        },
+    }
+    resolved = _resolve_refs(schema)
+
+    assert "$defs" not in resolved
+    assert "$ref" not in resolved["properties"]["info"]
+    assert resolved["properties"]["info"]["type"] == "object"
+    assert "name" in resolved["properties"]["info"]["properties"]
+
+
+def test_resolve_refs_no_defs():
+    """Un schema sans $defs est retourné tel quel."""
+    schema = {"type": "object", "properties": {"x": {"type": "string"}}}
+    resolved = _resolve_refs(schema)
+    assert resolved == {"type": "object", "properties": {"x": {"type": "string"}}}
+
+
+# --- Multi-tools ---
+
+
+def test_multiple_tools_claude():
+    """Plusieurs outils sont convertis correctement pour Claude."""
+    result = tools_to_claude_format([FakeTool(), FakeTool()])
+    assert len(result) == 2
+
+
+def test_multiple_tools_gemini():
+    """Plusieurs outils sont convertis correctement pour Gemini."""
+    result = tools_to_gemini_format([FakeTool(), FakeTool()])
+    assert len(result) == 2
