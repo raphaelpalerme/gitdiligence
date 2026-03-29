@@ -18,13 +18,22 @@
 
 ---
 
-## V1.1 — Outils manquants
+## V1.1 — Outils manquants + quick wins
 
-3 outils prévus dans l'architecture mais pas encore implémentés. Sans eux, l'agent ne peut pas évaluer correctement les dimensions Contributors et Repo Health.
+Outils prévus dans l'architecture mais pas encore implémentés, et retours de l'auto-analyse (score 5/10).
 
+### Outils
 - [ ] `get_contributors` — liste des contributeurs + nombre de commits
 - [ ] `get_commit_activity` — activité hebdomadaire sur 1 an
 - [ ] `get_languages` — répartition des langages (% par langage)
+
+### Projet
+- [ ] Licence (MIT ou Apache-2.0)
+- [ ] CI/CD — GitHub Actions (tests + ruff lint)
+- [ ] Dependabot (.github/dependabot.yml)
+- [ ] SECURITY.md
+- [ ] CONTRIBUTING.md
+- [ ] CHANGELOG.md
 
 ---
 
@@ -49,6 +58,7 @@
 
 ## Visibilité
 
-- [ ] Push sur GitHub
+- [x] Push sur GitHub
+- [x] Support Gemini gratuit (PR #1)
 - [ ] Screenshot/gif du output dans le README
 - [ ] Post sur LinkedIn/Twitter avec un exemple d'analyse
