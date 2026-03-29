@@ -1,64 +1,81 @@
 # Roadmap GitDiligence
 
-## V1 — Terminée
+## V1 — Done
 
-- [x] Squelette projet
+- [x] Project skeleton
 - [x] Tool + Registry
-- [x] Outils GitHub (repo info, file tree, file content, search code)
-- [x] Outils d'analyse (dépendances, sécurité)
-- [x] Schema Pydantic (8 dimensions)
-- [x] Client LLM (Claude tool_use)
+- [x] GitHub tools (repo info, file tree, file content, search code)
+- [x] Analysis tools (dependencies, security)
+- [x] Pydantic schema (8 dimensions)
+- [x] LLM client (Claude tool_use)
 - [x] System prompt
 - [x] State management
-- [x] Boucle ReAct
-- [x] Renderer Markdown
+- [x] ReAct loop
+- [x] Markdown renderer
 - [x] CLI (analyze + eval)
-- [x] Framework d'eval
+- [x] Eval framework
 - [x] README
+- [x] Gemini support (free, multi-provider)
 
 ---
 
-## V1.1 — Outils manquants + quick wins
+## V1.1 — Polish & completeness
 
-Outils prévus dans l'architecture mais pas encore implémentés, et retours de l'auto-analyse (score 5/10).
+Goal: go from self-analysis score 5/10 to 8+/10 and make the project presentable.
 
-### Outils
-- [ ] `get_contributors` — liste des contributeurs + nombre de commits
-- [ ] `get_commit_activity` — activité hebdomadaire sur 1 an
-- [ ] `get_languages` — répartition des langages (% par langage)
+### Missing tools
+- [ ] `get_contributors` — contributor list + commit counts
+- [ ] `get_commit_activity` — weekly activity over 1 year
+- [ ] `get_languages` — language breakdown (% per language)
 
-### Projet
-- [ ] Licence (MIT ou Apache-2.0)
+### Project hygiene
+- [ ] License (MIT)
 - [ ] CI/CD — GitHub Actions (tests + ruff lint)
 - [ ] Dependabot (.github/dependabot.yml)
 - [ ] SECURITY.md
 - [ ] CONTRIBUTING.md
 - [ ] CHANGELOG.md
 
----
-
-## V1.2 — Robustesse
-
-- [ ] Streaming output — afficher le raisonnement en temps réel au lieu d'attendre
-- [ ] Caching des appels GitHub — éviter de relire les mêmes fichiers
-- [ ] Support Go (go.mod), Rust (Cargo.toml), Ruby (Gemfile) dans `dependency.py`
-- [ ] Gestion des gros fichiers (tronquer le contenu si > 100KB)
+### Presentation
+- [ ] Switch everything to English (README, code, docstrings, prompts, reports)
+- [ ] Add a sample report (Flask) in the README
 
 ---
 
-## V2 — Fonctionnalités
+## V1.2 — CLI & UX
 
-- [ ] Web UI (Streamlit ou FastAPI)
-- [ ] Mode comparaison (2 repos côte à côte)
-- [ ] Lookup vulnérabilités (OSV.dev API)
-- [ ] Export PDF du rapport
-- [ ] Historique des analyses (SQLite)
+Improve the CLI experience before publishing.
+
+- [ ] Progress indicator — show which tool is running (spinner or progress bar)
+- [ ] Colored output — green for positive findings, red for negative
+- [ ] Summary card at the end — compact score + verdict with Rich panel
+- [ ] Error messages — clear, actionable messages for common failures (bad repo, no token, rate limit)
+- [ ] `--json` flag — output report as JSON to stdout (for piping)
 
 ---
 
-## Visibilité
+## V1.3 — Robustness
 
-- [x] Push sur GitHub
-- [x] Support Gemini gratuit (PR #1)
-- [ ] Screenshot/gif du output dans le README
-- [ ] Post sur LinkedIn/Twitter avec un exemple d'analyse
+- [ ] Streaming output — show reasoning in real time
+- [ ] GitHub API caching — avoid re-reading the same files
+- [ ] Support Go (go.mod), Rust (Cargo.toml), Ruby (Gemfile) in dependency.py
+- [ ] Truncate large files (> 100KB)
+
+---
+
+## V2 — Features
+
+- [ ] Web UI (Streamlit or FastAPI)
+- [ ] Compare mode (2 repos side by side)
+- [ ] Vulnerability lookup (OSV.dev API)
+- [ ] PDF export
+- [ ] Analysis history (SQLite)
+
+---
+
+## Visibility
+
+- [x] Push to GitHub
+- [x] Free Gemini support (PR #1)
+- [ ] Publish on Reddit/HackerNews, collect feedback
+- [ ] Post on LinkedIn/Twitter with a sample analysis
