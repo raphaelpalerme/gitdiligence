@@ -1,16 +1,16 @@
-"""Tests pour le system prompt (agent/prompts.py)."""
+"""Tests for the system prompt (agent/prompts.py)."""
 
 from gitdiligence.agent.prompts import build_system_prompt
 
 
 def test_prompt_contains_repo_name():
-    """Vérifie que le prompt inclut le owner/repo."""
+    """Verify that the prompt includes the owner/repo."""
     prompt = build_system_prompt("pallets", "flask")
     assert "pallets/flask" in prompt
 
 
 def test_prompt_contains_dimensions():
-    """Vérifie que les 8 dimensions sont mentionnées."""
+    """Verify that the 8 dimensions are mentioned."""
     prompt = build_system_prompt("owner", "repo")
     dimensions = [
         "Repo Health",
@@ -27,7 +27,7 @@ def test_prompt_contains_dimensions():
 
 
 def test_prompt_contains_verdicts():
-    """Vérifie que les 4 verdicts sont mentionnés."""
+    """Verify that the 4 verdicts are mentioned."""
     prompt = build_system_prompt("owner", "repo")
     assert "Strong Invest" in prompt
     assert "Pass" in prompt

@@ -1,6 +1,6 @@
-"""Tests pour les outils d'analyse (dependency.py + security.py).
+"""Tests for analysis tools (dependency.py + security.py).
 
-Pas besoin de token GitHub — ces outils analysent du contenu brut.
+No GitHub token needed — these tools analyze raw content.
 """
 
 import json
@@ -13,7 +13,7 @@ from gitdiligence.tools.security import CheckSecurity
 
 
 def test_parse_pyproject_toml():
-    """Vérifie le parsing d'un pyproject.toml."""
+    """Verify parsing of a pyproject.toml."""
     tool = AnalyzeDependencies()
     content = '[project]\ndependencies = [\n    "flask>=2.0",\n    "requests>=2.28",\n]'
     result = json.loads(tool.execute(filename="pyproject.toml", content=content))
@@ -24,18 +24,18 @@ def test_parse_pyproject_toml():
 
 
 def test_parse_requirements_txt():
-    """Vérifie le parsing d'un requirements.txt."""
+    """Verify parsing of a requirements.txt."""
     tool = AnalyzeDependencies()
-    content = "flask>=2.0\nrequests==2.28.0\n# un commentaire\npydantic"
+    content = "flask>=2.0\nrequests==2.28.0\n# a comment\npydantic"
     result = json.loads(tool.execute(filename="requirements.txt", content=content))
 
     assert result["count"] == 3
     assert result["dependencies"][2]["name"] == "pydantic"
-    assert result["dependencies"][2]["version"] == "non spécifiée"
+    assert result["dependencies"][2]["version"] == "unspecified"
 
 
 def test_parse_package_json():
-    """Vérifie le parsing d'un package.json."""
+    """Verify parsing of a package.json."""
     tool = AnalyzeDependencies()
     content = '{"dependencies": {"react": "^18.0"}, "devDependencies": {"jest": "^29.0"}}'
     result = json.loads(tool.execute(filename="package.json", content=content))
@@ -44,7 +44,7 @@ def test_parse_package_json():
 
 
 def test_unsupported_format():
-    """Vérifie qu'un format inconnu retourne une erreur propre."""
+    """Verify that an unknown format returns a proper error."""
     tool = AnalyzeDependencies()
     result = json.loads(tool.execute(filename="Gemfile", content="gem 'rails'"))
 
@@ -55,7 +55,7 @@ def test_unsupported_format():
 
 
 def test_security_detects_good_signals():
-    """Vérifie la détection des bons signaux (LICENSE, CI, etc.)."""
+    """Verify detection of good signals (LICENSE, CI, etc.)."""
     tool = CheckSecurity()
     tree = "LICENSE\n.github/workflows/ci.yml\nSECURITY.md"
     result = json.loads(tool.execute(file_tree=tree))
@@ -65,7 +65,7 @@ def test_security_detects_good_signals():
 
 
 def test_security_detects_warnings():
-    """Vérifie la détection des mauvais signaux (.env commité)."""
+    """Verify detection of bad signals (committed .env)."""
     tool = CheckSecurity()
     tree = "src/app.py\n.env\nid_rsa"
     result = json.loads(tool.execute(file_tree=tree))
@@ -74,7 +74,7 @@ def test_security_detects_warnings():
 
 
 def test_security_detects_missing():
-    """Vérifie la détection des fichiers manquants."""
+    """Verify detection of missing files."""
     tool = CheckSecurity()
     tree = "src/app.py\nREADME.md"
     result = json.loads(tool.execute(file_tree=tree))

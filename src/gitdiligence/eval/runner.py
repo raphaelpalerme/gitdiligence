@@ -1,7 +1,7 @@
-"""Lance l'évaluation sur les repos de référence.
+"""Run evaluation on reference repos.
 
-Pour chaque fixture, lance l'agent et vérifie que le rapport
-correspond aux attentes (score, verdict, complétude).
+For each fixture, run the agent and verify the report
+matches expectations (score, verdict, completeness).
 """
 
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ from gitdiligence.eval.fixtures import EvalFixture, FIXTURES
 
 @dataclass
 class EvalResult:
-    """Résultat de l'évaluation d'un repo."""
+    """Result of evaluating a single repo."""
 
     fixture: EvalFixture
     passed: bool
@@ -28,7 +28,7 @@ class EvalResult:
 
 
 def evaluate_one(fixture: EvalFixture, model: str = "claude-sonnet-4-6") -> EvalResult:
-    """Évalue l'agent sur un repo et vérifie les attentes."""
+    """Evaluate the agent on a repo and check expectations."""
     errors = []
 
     try:
@@ -41,36 +41,35 @@ def evaluate_one(fixture: EvalFixture, model: str = "claude-sonnet-4-6") -> Eval
         return EvalResult(
             fixture=fixture,
             passed=False,
-            errors=[f"Crash de l'agent : {e}"],
+            errors=[f"Agent crashed: {e}"],
         )
 
-    # Pas de rapport → échec
     if state.report is None:
         return EvalResult(
             fixture=fixture,
             passed=False,
             tokens=state.total_tokens,
             steps=len(state.steps),
-            errors=["L'agent n'a pas produit de rapport"],
+            errors=["Agent did not produce a report"],
         )
 
     report = state.report
 
-    # Vérifie la complétude (8 dimensions)
+    # Check completeness (8 dimensions)
     if len(report.dimensions) != 8:
-        errors.append(f"Attendu 8 dimensions, obtenu {len(report.dimensions)}")
+        errors.append(f"Expected 8 dimensions, got {len(report.dimensions)}")
 
-    # Vérifie le range de score
+    # Check score range
     if not (fixture.min_score <= report.overall_score <= fixture.max_score):
         errors.append(
-            f"Score {report.overall_score} hors range "
+            f"Score {report.overall_score} out of range "
             f"[{fixture.min_score}, {fixture.max_score}]"
         )
 
-    # Vérifie le verdict
+    # Check verdict
     if report.verdict not in fixture.expected_verdicts:
         errors.append(
-            f"Verdict '{report.verdict}' non attendu, "
+            f"Verdict '{report.verdict}' unexpected, "
             f"expected: {fixture.expected_verdicts}"
         )
 
@@ -86,7 +85,7 @@ def evaluate_one(fixture: EvalFixture, model: str = "claude-sonnet-4-6") -> Eval
 
 
 def run_eval(model: str = "claude-sonnet-4-6") -> list[EvalResult]:
-    """Lance l'évaluation sur toutes les fixtures."""
+    """Run evaluation on all fixtures."""
     results = []
     for fixture in FIXTURES:
         print(f"\nEval: {fixture.owner}/{fixture.repo}...")
@@ -101,11 +100,10 @@ def run_eval(model: str = "claude-sonnet-4-6") -> list[EvalResult]:
 
         results.append(result)
 
-    # Résumé
     passed = sum(1 for r in results if r.passed)
     total = len(results)
     total_tokens = sum(r.tokens for r in results)
     print(f"\n{'='*40}")
-    print(f"Résultat: {passed}/{total} passés, {total_tokens:,} tokens total")
+    print(f"Result: {passed}/{total} passed, {total_tokens:,} tokens total")
 
     return results

@@ -1,7 +1,7 @@
-"""Types normalisés pour supporter plusieurs providers LLM.
+"""Normalized types for multi-provider LLM support.
 
-Ces dataclasses sont le format commun entre Claude et Gemini.
-react.py utilise uniquement ces types, jamais les types natifs des SDKs.
+These dataclasses are the common format between Claude and Gemini.
+react.py only uses these types, never the native SDK types.
 """
 
 from dataclasses import dataclass, field
@@ -10,16 +10,16 @@ from typing import Any
 
 @dataclass
 class ToolCall:
-    """Un appel d'outil demandé par le LLM."""
+    """A tool call requested by the LLM."""
 
     name: str
     input: dict
-    id: str  # tool_use_id pour Claude, id synthétique pour Gemini
+    id: str  # tool_use_id for Claude, synthetic id for Gemini
 
 
 @dataclass
 class Usage:
-    """Tokens consommés par un appel LLM."""
+    """Tokens consumed by an LLM call."""
 
     input_tokens: int
     output_tokens: int
@@ -27,10 +27,10 @@ class Usage:
 
 @dataclass
 class LLMResponse:
-    """Réponse normalisée d'un LLM (Claude ou Gemini)."""
+    """Normalized LLM response (Claude or Gemini)."""
 
-    text: str  # Le raisonnement (thought)
+    text: str  # The reasoning (thought)
     tool_calls: list[ToolCall] = field(default_factory=list)
     usage: Usage = field(default_factory=lambda: Usage(0, 0))
-    raw_content: Any = None  # Contenu natif du provider (pour l'historique des messages)
-    provider: str = ""  # "claude" ou "gemini"
+    raw_content: Any = None  # Provider-native content (for message history)
+    provider: str = ""  # "claude" or "gemini"

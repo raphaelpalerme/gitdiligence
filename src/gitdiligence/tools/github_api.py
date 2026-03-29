@@ -1,7 +1,7 @@
-"""Client HTTP partagé pour l'API GitHub.
+"""Shared HTTP client for the GitHub API.
 
-Toutes les requêtes GitHub passent par ce module.
-Il gère l'authentification, l'URL de base, et les erreurs.
+All GitHub requests go through this module.
+Handles authentication, base URL, and errors.
 """
 
 import os
@@ -12,7 +12,7 @@ BASE_URL = "https://api.github.com"
 
 
 def get_client() -> httpx.Client:
-    """Crée un client HTTP configuré pour l'API GitHub."""
+    """Create an HTTP client configured for the GitHub API."""
     token = os.environ.get("GITHUB_TOKEN")
     headers = {"Accept": "application/vnd.github.v3+json"}
     if token:
@@ -21,17 +21,17 @@ def get_client() -> httpx.Client:
 
 
 def github_get(path: str) -> dict:
-    """Fait un GET sur l'API GitHub et retourne le JSON.
+    """Make a GET request to the GitHub API and return the JSON response.
 
-    Lève une exception avec un message clair si la requête échoue.
+    Raises an exception with a clear message if the request fails.
     """
     with get_client() as client:
         response = client.get(path)
 
         if response.status_code == 404:
-            raise ValueError(f"Ressource introuvable : {path}")
+            raise ValueError(f"Resource not found: {path}")
         if response.status_code == 403:
-            raise ValueError(f"Accès refusé (rate limit ?) : {path}")
+            raise ValueError(f"Access denied (rate limit?): {path}")
         response.raise_for_status()
 
         return response.json()

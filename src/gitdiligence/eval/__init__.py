@@ -1,1 +1,1 @@
-"""Framework d'évaluation pour l'agent de due diligence."""
+"""Evaluation framework for the due diligence agent."""

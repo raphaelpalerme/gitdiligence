@@ -24,25 +24,25 @@
 Goal: go from self-analysis score 5/10 to 8+/10 and make the project presentable.
 
 ### Missing tools
-- [ ] `get_contributors` — contributor list + commit counts
-- [ ] `get_commit_activity` — weekly activity over 1 year
-- [ ] `get_languages` — language breakdown (% per language)
+- [x] `get_contributors` — contributor list + commit counts
+- [x] `get_commit_activity` — weekly activity over 1 year
+- [x] `get_languages` — language breakdown (% per language)
 
 ### Project hygiene
-- [ ] License (MIT)
-- [ ] CI/CD — GitHub Actions (tests + ruff lint)
-- [ ] Dependabot (.github/dependabot.yml)
-- [ ] SECURITY.md
-- [ ] CONTRIBUTING.md
-- [ ] CHANGELOG.md
+- [x] License (MIT)
+- [x] CI/CD — GitHub Actions (tests + ruff lint)
+- [x] Dependabot (.github/dependabot.yml)
+- [x] SECURITY.md
+- [x] CONTRIBUTING.md
+- [x] CHANGELOG.md
 
 ### Presentation
-- [ ] Switch everything to English (README, code, docstrings, prompts, reports)
-- [ ] Add a sample report (Flask) in the README
+- [x] Add a sample report (Flask) in the README
+- [x] Document Gemini free tier limits in README
 
 ---
 
-## V1.2 — CLI & UX
+## V1.2 — CLI & UX + Code quality
 
 Improve the CLI experience before publishing.
 
@@ -51,6 +51,7 @@ Improve the CLI experience before publishing.
 - [ ] Summary card at the end — compact score + verdict with Rich panel
 - [ ] Error messages — clear, actionable messages for common failures (bad repo, no token, rate limit)
 - [ ] `--json` flag — output report as JSON to stdout (for piping)
+- [ ] Type annotations — fix Pylance warnings in llm/client.py (strict typing)
 
 ---
 
@@ -71,11 +72,3 @@ Improve the CLI experience before publishing.
 - [ ] PDF export
 - [ ] Analysis history (SQLite)
 
----
-
-## Visibility
-
-- [x] Push to GitHub
-- [x] Free Gemini support (PR #1)
-- [ ] Publish on Reddit/HackerNews, collect feedback
-- [ ] Post on LinkedIn/Twitter with a sample analysis

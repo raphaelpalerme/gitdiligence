@@ -1,30 +1,30 @@
-"""Modèles Pydantic du rapport de due diligence.
+"""Pydantic models for the due diligence report.
 
-Définit la structure exacte du rapport que l'agent doit produire.
-Pydantic valide les données ET génère un JSON Schema pour l'API Claude.
+Defines the exact structure the agent must produce.
+Pydantic validates the data AND generates a JSON Schema for the LLM API.
 """
 
 from pydantic import BaseModel, Field
 
 
 class Finding(BaseModel):
-    """Une observation concrète dans une dimension."""
+    """A concrete observation within a dimension."""
 
-    detail: str = Field(description="Description de l'observation")
-    positive: bool = Field(description="True = point fort, False = point faible")
+    detail: str = Field(description="Description of the observation")
+    positive: bool = Field(description="True = strength, False = weakness")
 
 
 class Dimension(BaseModel):
-    """Une des 8 dimensions d'évaluation."""
+    """One of the 8 evaluation dimensions."""
 
-    name: str = Field(description="Nom de la dimension")
-    score: int = Field(ge=1, le=10, description="Score de 1 (très mauvais) à 10 (excellent)")
-    findings: list[Finding] = Field(description="Observations concrètes")
-    recommendation: str = Field(description="Conseil actionnable pour cette dimension")
+    name: str = Field(description="Dimension name")
+    score: int = Field(ge=1, le=10, description="Score from 1 (very bad) to 10 (excellent)")
+    findings: list[Finding] = Field(description="Concrete observations")
+    recommendation: str = Field(description="Actionable recommendation for this dimension")
 
 
 class RepoInfo(BaseModel):
-    """Métadonnées basiques du repo analysé."""
+    """Basic metadata of the analyzed repo."""
 
     name: str
     owner: str
@@ -37,18 +37,18 @@ class RepoInfo(BaseModel):
 
 
 class DiligenceReport(BaseModel):
-    """Rapport complet de due diligence technique."""
+    """Complete technical due diligence report."""
 
-    repo_info: RepoInfo = Field(description="Métadonnées du repo")
+    repo_info: RepoInfo = Field(description="Repository metadata")
     dimensions: list[Dimension] = Field(
         min_length=8,
         max_length=8,
-        description="Les 8 dimensions d'évaluation",
+        description="The 8 evaluation dimensions",
     )
     overall_score: float = Field(
-        ge=1, le=10, description="Score global (moyenne pondérée des dimensions)"
+        ge=1, le=10, description="Overall score (weighted average of dimensions)"
     )
     verdict: str = Field(
         description="Strong Invest | Invest with Caution | Pass | Needs More Investigation"
     )
-    summary: str = Field(description="Synthèse globale en quelques phrases")
+    summary: str = Field(description="Overall summary in a few sentences")
