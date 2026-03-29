@@ -1,7 +1,7 @@
-"""State management de l'agent ReAct.
+"""ReAct agent state management.
 
-Garde trace des messages, des étapes (steps), des tokens consommés,
-et du rapport final. Utilisé par react.py pendant la boucle.
+Tracks messages, steps, token usage, and the final report.
+Used by react.py during the agent loop.
 """
 
 from dataclasses import dataclass, field
@@ -11,17 +11,17 @@ from gitdiligence.report.schema import DiligenceReport
 
 @dataclass
 class Step:
-    """Une étape de la boucle ReAct (un appel d'outil)."""
+    """A single step in the ReAct loop (one tool call)."""
 
     tool_name: str
     tool_input: dict
     result: str
-    thought: str = ""  # Le raisonnement de Claude avant l'appel
+    thought: str = ""  # LLM reasoning before the tool call
 
 
 @dataclass
 class AgentState:
-    """État complet de l'agent pendant une analyse."""
+    """Full agent state during an analysis."""
 
     owner: str
     repo: str

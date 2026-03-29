@@ -1,8 +1,8 @@
-"""Tests pour les outils GitHub (github_contents.py + search.py).
+"""Tests for the GitHub tools (github_contents.py + search.py).
 
-Ces tests tapent la vraie API GitHub.
-Ils sont skippés automatiquement si GITHUB_TOKEN n'est pas défini.
-On utilise le repo pallets/flask comme cible — c'est stable et public.
+These tests hit the real GitHub API.
+They are automatically skipped if GITHUB_TOKEN is not set.
+We use the pallets/flask repo as target — it's stable and public.
 """
 
 import os
@@ -14,7 +14,7 @@ from gitdiligence.tools.search import SearchCode
 
 needs_token = pytest.mark.skipif(
     not os.environ.get("GITHUB_TOKEN"),
-    reason="GITHUB_TOKEN non défini",
+    reason="GITHUB_TOKEN not set",
 )
 
 OWNER = "pallets"
@@ -23,7 +23,7 @@ REPO = "flask"
 
 @needs_token
 def test_get_repo_info():
-    """Vérifie qu'on récupère les métadonnées d'un repo."""
+    """Verify that we retrieve the metadata of a repo."""
     tool = GetRepoInfo()
     result = json.loads(tool.execute(owner=OWNER, repo=REPO))
 
@@ -34,7 +34,7 @@ def test_get_repo_info():
 
 @needs_token
 def test_get_file_tree():
-    """Vérifie qu'on récupère la liste des fichiers d'un repo."""
+    """Verify that we retrieve the file list of a repo."""
     tool = GetFileTree()
     result = tool.execute(owner=OWNER, repo=REPO)
 
@@ -45,7 +45,7 @@ def test_get_file_tree():
 
 @needs_token
 def test_get_file_content():
-    """Vérifie qu'on peut lire le contenu d'un fichier."""
+    """Verify that we can read the content of a file."""
     tool = GetFileContent()
     result = tool.execute(owner=OWNER, repo=REPO, path="pyproject.toml")
 
@@ -55,7 +55,7 @@ def test_get_file_content():
 
 @needs_token
 def test_search_code():
-    """Vérifie que la recherche de code retourne des résultats."""
+    """Verify that code search returns results."""
     tool = SearchCode()
     result = json.loads(tool.execute(owner=OWNER, repo=REPO, query="def create_app"))
 

@@ -1,10 +1,10 @@
-"""Tests pour le state management (agent/state.py)."""
+"""Tests for the state management (agent/state.py)."""
 
 from gitdiligence.agent.state import AgentState, Step
 
 
 def test_initial_state():
-    """L'état initial est vide, pas terminé."""
+    """The initial state is empty and not finished."""
     state = AgentState(owner="pallets", repo="flask")
 
     assert state.owner == "pallets"
@@ -14,7 +14,7 @@ def test_initial_state():
 
 
 def test_add_step():
-    """On peut ajouter une étape."""
+    """We can add a step."""
     state = AgentState(owner="pallets", repo="flask")
     step = Step(
         tool_name="get_repo_info",
@@ -30,7 +30,7 @@ def test_add_step():
 
 
 def test_add_tokens():
-    """Le compteur de tokens s'accumule."""
+    """The token counter accumulates."""
     state = AgentState(owner="pallets", repo="flask")
     state.add_tokens(input_tokens=100, output_tokens=50)
     state.add_tokens(input_tokens=200, output_tokens=80)
@@ -41,10 +41,10 @@ def test_add_tokens():
 
 
 def test_is_done_when_report_set():
-    """L'agent est terminé quand le rapport est défini."""
+    """The agent is finished when the report is set."""
     state = AgentState(owner="pallets", repo="flask")
     assert state.is_done is False
 
-    # Simule un rapport (on utilise None → pas terminé, objet → terminé)
+    # Simulate a report (None means not finished, object means finished)
     state.report = "fake_report"  # type: ignore
     assert state.is_done is True

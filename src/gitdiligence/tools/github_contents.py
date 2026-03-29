@@ -1,10 +1,4 @@
-"""Outils pour récupérer le contenu d'un repo GitHub.
-
-Trois outils :
-- get_repo_info : métadonnées du repo (stars, langage, description...)
-- get_file_tree : arborescence des fichiers
-- get_file_content : contenu d'un fichier spécifique
-"""
+"""GitHub content tools (repo info, file tree, file content)."""
 
 import json
 import base64
@@ -14,15 +8,15 @@ from gitdiligence.tools.github_api import github_get
 
 
 class GetRepoInfo(Tool):
-    """Récupère les métadonnées d'un repo GitHub."""
+    """Fetch metadata of a GitHub repo."""
 
     name = "get_repo_info"
-    description = "Récupère les métadonnées d'un repo GitHub (stars, langage, description, etc.)"
+    description = "Get metadata of a GitHub repo (stars, language, description, etc.)"
     parameters = {
         "type": "object",
         "properties": {
-            "owner": {"type": "string", "description": "Propriétaire du repo"},
-            "repo": {"type": "string", "description": "Nom du repo"},
+            "owner": {"type": "string", "description": "Repository owner"},
+            "repo": {"type": "string", "description": "Repository name"},
         },
         "required": ["owner", "repo"],
     }
@@ -32,7 +26,7 @@ class GetRepoInfo(Tool):
         repo = kwargs["repo"]
         data = github_get(f"/repos/{owner}/{repo}")
 
-        # On extrait seulement les champs utiles pour l'agent
+        # Extract only the fields useful for the agent
         info = {
             "name": data["name"],
             "description": data.get("description"),
@@ -50,15 +44,15 @@ class GetRepoInfo(Tool):
 
 
 class GetFileTree(Tool):
-    """Récupère l'arborescence des fichiers d'un repo."""
+    """Fetch the file tree of a GitHub repo."""
 
     name = "get_file_tree"
-    description = "Récupère l'arborescence des fichiers d'un repo GitHub"
+    description = "Get the file tree of a GitHub repo"
     parameters = {
         "type": "object",
         "properties": {
-            "owner": {"type": "string", "description": "Propriétaire du repo"},
-            "repo": {"type": "string", "description": "Nom du repo"},
+            "owner": {"type": "string", "description": "Repository owner"},
+            "repo": {"type": "string", "description": "Repository name"},
         },
         "required": ["owner", "repo"],
     }
@@ -68,28 +62,28 @@ class GetFileTree(Tool):
         repo = kwargs["repo"]
         data = github_get(f"/repos/{owner}/{repo}/git/trees/HEAD?recursive=1")
 
-        # On ne garde que les chemins des fichiers (pas les dossiers)
+        # Keep only file paths (not directories)
         paths = [item["path"] for item in data["tree"] if item["type"] == "blob"]
 
-        # Tronque si trop de fichiers (évite d'exploser les tokens)
+        # Truncate if too many files (avoids blowing up tokens)
         max_files = 500
         if len(paths) > max_files:
             truncated = paths[:max_files]
-            return "\n".join(truncated) + f"\n\n... ({len(paths)} fichiers au total, tronqué à {max_files})"
+            return "\n".join(truncated) + f"\n\n... ({len(paths)} files total, truncated to {max_files})"
         return "\n".join(paths)
 
 
 class GetFileContent(Tool):
-    """Récupère le contenu d'un fichier dans un repo GitHub."""
+    """Fetch the content of a file in a GitHub repo."""
 
     name = "get_file_content"
-    description = "Récupère le contenu d'un fichier dans un repo GitHub"
+    description = "Get the content of a file in a GitHub repo"
     parameters = {
         "type": "object",
         "properties": {
-            "owner": {"type": "string", "description": "Propriétaire du repo"},
-            "repo": {"type": "string", "description": "Nom du repo"},
-            "path": {"type": "string", "description": "Chemin du fichier dans le repo"},
+            "owner": {"type": "string", "description": "Repository owner"},
+            "repo": {"type": "string", "description": "Repository name"},
+            "path": {"type": "string", "description": "File path in the repo"},
         },
         "required": ["owner", "repo", "path"],
     }
@@ -100,6 +94,6 @@ class GetFileContent(Tool):
         path = kwargs["path"]
         data = github_get(f"/repos/{owner}/{repo}/contents/{path}")
 
-        # L'API GitHub retourne le contenu encodé en base64
+        # GitHub API returns content encoded in base64
         content = base64.b64decode(data["content"]).decode("utf-8")
         return content

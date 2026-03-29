@@ -1,7 +1,7 @@
-"""Outil d'analyse des signaux de sécurité d'un repo.
+"""Security signal analysis tool.
 
-Heuristiques simples basées sur la présence/absence de fichiers.
-Ce n'est pas un scanner de vulnérabilités — juste des indicateurs rapides.
+Simple heuristics based on file presence/absence.
+Not a vulnerability scanner — just quick indicators.
 """
 
 import json
@@ -9,34 +9,32 @@ import json
 from gitdiligence.tools.base import Tool
 
 
-# Fichiers dont la présence est un bon signe
 GOOD_SIGNALS = {
-    "SECURITY.md": "Politique de sécurité documentée",
-    ".github/dependabot.yml": "Mises à jour automatiques des dépendances",
-    "Dockerfile": "Containerisation (reproductibilité)",
-    ".github/workflows": "CI/CD en place",
-    "LICENSE": "Licence définie",
+    "SECURITY.md": "Security policy documented",
+    ".github/dependabot.yml": "Automated dependency updates",
+    "Dockerfile": "Containerization (reproducibility)",
+    ".github/workflows": "CI/CD in place",
+    "LICENSE": "License defined",
 }
 
-# Fichiers dont la présence est un mauvais signe
 BAD_SIGNALS = {
-    ".env": "Fichier .env commité (secrets potentiellement exposés)",
-    "id_rsa": "Clé SSH privée dans le repo",
-    ".npmrc": "Config npm potentiellement avec token",
+    ".env": "Committed .env file (potentially exposed secrets)",
+    "id_rsa": "SSH private key in the repo",
+    ".npmrc": "npm config potentially containing tokens",
 }
 
 
 class CheckSecurity(Tool):
-    """Analyse la liste des fichiers d'un repo pour repérer des signaux de sécurité."""
+    """Analyze a repo's file list for security signals."""
 
     name = "check_security"
-    description = "Analyse l'arborescence d'un repo pour repérer des signaux de sécurité"
+    description = "Analyze a repo's file tree for security signals"
     parameters = {
         "type": "object",
         "properties": {
             "file_tree": {
                 "type": "string",
-                "description": "Liste des fichiers du repo (un par ligne)",
+                "description": "List of files in the repo (one per line)",
             },
         },
         "required": ["file_tree"],
@@ -50,15 +48,12 @@ class CheckSecurity(Tool):
         missing = []
         warnings = []
 
-        # Vérifie les bons signaux
         for pattern, description in GOOD_SIGNALS.items():
-            # Cherche si un fichier contient le pattern (pour gérer les sous-dossiers)
             if any(pattern in f for f in files):
                 present.append({"file": pattern, "signal": description})
             else:
                 missing.append({"file": pattern, "signal": description})
 
-        # Vérifie les mauvais signaux
         for pattern, description in BAD_SIGNALS.items():
             if any(f.endswith(pattern) for f in files):
                 warnings.append({"file": pattern, "signal": description})

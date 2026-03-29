@@ -1,7 +1,6 @@
-"""Outil de recherche de code dans un repo GitHub.
+"""Code search tool for GitHub repos.
 
-Utilise l'API GitHub Search qui cherche dans le code indexé.
-Limitation : seule la branche par défaut est indexée.
+Uses the GitHub Search API (only the default branch is indexed).
 """
 
 import json
@@ -11,16 +10,16 @@ from gitdiligence.tools.github_api import github_get
 
 
 class SearchCode(Tool):
-    """Cherche un mot-clé dans le code d'un repo GitHub."""
+    """Search for a keyword in the code of a GitHub repo."""
 
     name = "search_code"
-    description = "Cherche un mot-clé dans le code d'un repo GitHub"
+    description = "Search for a keyword in the code of a GitHub repo"
     parameters = {
         "type": "object",
         "properties": {
-            "owner": {"type": "string", "description": "Propriétaire du repo"},
-            "repo": {"type": "string", "description": "Nom du repo"},
-            "query": {"type": "string", "description": "Mot-clé à chercher"},
+            "owner": {"type": "string", "description": "Repository owner"},
+            "repo": {"type": "string", "description": "Repository name"},
+            "query": {"type": "string", "description": "Keyword to search for"},
         },
         "required": ["owner", "repo", "query"],
     }
@@ -30,11 +29,11 @@ class SearchCode(Tool):
         repo = kwargs["repo"]
         query = kwargs["query"]
 
-        # L'API Search a sa propre syntaxe : "query repo:owner/repo"
+        # The Search API has its own syntax: "query repo:owner/repo"
         data = github_get(f"/search/code?q={query}+repo:{owner}/{repo}")
 
         results = []
-        for item in data.get("items", [])[:10]:  # Max 10 résultats
+        for item in data.get("items", [])[:10]:  # Max 10 results
             results.append({
                 "path": item["path"],
                 "url": item["html_url"],

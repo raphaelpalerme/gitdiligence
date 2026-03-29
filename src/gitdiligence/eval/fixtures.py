@@ -1,6 +1,6 @@
-"""Repos de référence pour l'évaluation.
+"""Reference repos for evaluation.
 
-Chaque fixture définit un repo et les attentes sur le rapport.
+Each fixture defines a repo and the expected report outcomes.
 """
 
 from dataclasses import dataclass
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass
 class EvalFixture:
-    """Un repo de test avec les résultats attendus."""
+    """A test repo with expected results."""
 
     owner: str
     repo: str

@@ -1,8 +1,8 @@
-"""Client LLM multi-provider (Claude + Gemini).
+"""Multi-provider LLM client (Claude + Gemini).
 
-Dispatcher qui détecte le provider via le nom du modèle et
-retourne une LLMResponse normalisée. react.py ne connaît jamais
-le provider utilisé.
+Dispatcher that detects the provider from the model name and
+returns a normalized LLMResponse. react.py never knows which
+provider is being used.
 """
 
 import os
@@ -13,21 +13,21 @@ from gitdiligence.llm.models import LLMResponse, ToolCall, Usage
 from gitdiligence.tools.base import Tool
 
 
-# --- Détection du provider ---
+# --- Provider detection ---
 
 
 def detect_provider(model: str) -> str:
-    """Détecte le provider à partir du nom du modèle."""
+    """Detect the provider from the model name."""
     if model.startswith("gemini-"):
         return "gemini"
     return "claude"
 
 
-# --- Conversion des outils ---
+# --- Tool format conversion ---
 
 
 def tools_to_claude_format(tools: list[Tool]) -> list[dict]:
-    """Convertit nos outils au format Claude (input_schema)."""
+    """Convert our tools to Claude format (input_schema)."""
     return [
         {
             "name": tool.name,
@@ -39,7 +39,7 @@ def tools_to_claude_format(tools: list[Tool]) -> list[dict]:
 
 
 def tools_to_gemini_format(tools: list[Tool]) -> list[dict]:
-    """Convertit nos outils au format Gemini (parameters)."""
+    """Convert our tools to Gemini format (parameters)."""
     return [
         {
             "name": tool.name,
@@ -51,10 +51,10 @@ def tools_to_gemini_format(tools: list[Tool]) -> list[dict]:
 
 
 def _resolve_refs(schema: dict) -> dict:
-    """Résout les $ref dans un JSON Schema en inlinant les définitions.
+    """Resolve $ref in a JSON Schema by inlining definitions.
 
-    Gemini ne supporte pas $ref/$defs. On remplace chaque $ref
-    par la définition correspondante.
+    Gemini does not support $ref/$defs. We replace each $ref
+    with the corresponding definition.
     """
     defs = schema.pop("$defs", {})
     if not defs:
@@ -74,7 +74,7 @@ def _resolve_refs(schema: dict) -> dict:
 
 
 def _extra_tools_to_gemini(extra_tools: list[dict]) -> list[dict]:
-    """Convertit les extra_tools (format Claude) au format Gemini."""
+    """Convert extra_tools (Claude format) to Gemini format."""
     result = []
     for tool in extra_tools:
         schema = tool.get("input_schema", tool.get("parameters", {}))
@@ -86,11 +86,11 @@ def _extra_tools_to_gemini(extra_tools: list[dict]) -> list[dict]:
     return result
 
 
-# --- Format des messages ---
+# --- Message formatting ---
 
 
 def format_assistant_message(response: LLMResponse) -> dict:
-    """Construit le message assistant à ajouter à l'historique."""
+    """Build the assistant message to append to the history."""
     if response.provider == "gemini":
         return {"role": "model", "parts": response.raw_content}
     # Claude
@@ -98,9 +98,9 @@ def format_assistant_message(response: LLMResponse) -> dict:
 
 
 def format_tool_results(results: list[dict], provider: str) -> dict:
-    """Construit le message user contenant les résultats des outils.
+    """Build the user message containing tool results.
 
-    results: liste de {"name": ..., "id": ..., "content": ..., "is_error": ...}
+    results: list of {"name": ..., "id": ..., "content": ..., "is_error": ...}
     """
     if provider == "gemini":
         from google.genai import types
@@ -127,7 +127,7 @@ def format_tool_results(results: list[dict], provider: str) -> dict:
     return {"role": "user", "content": tool_results}
 
 
-# --- Appels LLM ---
+# --- LLM calls ---
 
 
 def _call_claude(
@@ -138,7 +138,7 @@ def _call_claude(
     max_tokens: int,
     extra_tools: list[dict],
 ) -> LLMResponse:
-    """Appelle l'API Claude et retourne une LLMResponse."""
+    """Call the Claude API and return an LLMResponse."""
     import anthropic
 
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -160,10 +160,10 @@ def _call_claude(
             if attempt == max_retries - 1:
                 raise
             wait = 60 * (attempt + 1)
-            print(f"Rate limit atteint. Attente de {wait}s...")
+            print(f"Rate limit reached. Waiting {wait}s...")
             time.sleep(wait)
 
-    # Normalise la réponse
+    # Normalize the response
     text_parts = []
     tool_calls = []
     for block in response.content:
@@ -192,29 +192,29 @@ def _call_gemini(
     max_tokens: int,
     extra_tools: list[dict],
 ) -> LLMResponse:
-    """Appelle l'API Gemini et retourne une LLMResponse."""
+    """Call the Gemini API and return an LLMResponse."""
     try:
         from google import genai
         from google.genai import types
     except ImportError:
         raise ImportError(
-            "google-genai est requis pour les modèles Gemini. "
-            "Installe-le avec : pip install gitdiligence[gemini]"
+            "google-genai is required for Gemini models. "
+            "Install it with: pip install gitdiligence[gemini]"
         )
 
     client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-    # Convertit les outils au format Gemini
+    # Convert tools to Gemini format
     all_declarations = tools_to_gemini_format(tools) + _extra_tools_to_gemini(extra_tools)
     gemini_tools = [types.Tool(function_declarations=all_declarations)]
 
-    # Convertit les messages au format Gemini
-    # Les messages sont soit au format natif Gemini (via format_assistant_message
-    # / format_tool_results), soit le premier message user en string.
+    # Convert messages to Gemini format
+    # Messages are either in native Gemini format (via format_assistant_message
+    # / format_tool_results), or the first user message as a string.
     gemini_contents = []
     for msg in messages:
         if "parts" in msg:
-            # Déjà au format Gemini (messages précédents)
+            # Already in Gemini format (previous messages)
             gemini_contents.append(msg)
         elif msg["role"] == "user" and isinstance(msg["content"], str):
             gemini_contents.append({
@@ -240,12 +240,12 @@ def _call_gemini(
                 if attempt == max_retries - 1:
                     raise
                 wait = 60 * (attempt + 1)
-                print(f"Rate limit atteint. Attente de {wait}s...")
+                print(f"Rate limit reached. Waiting {wait}s...")
                 time.sleep(wait)
             else:
                 raise
 
-    # Normalise la réponse
+    # Normalize the response
     text_parts = []
     tool_calls = []
     parts = response.candidates[0].content.parts
@@ -274,7 +274,7 @@ def _call_gemini(
     )
 
 
-# --- Dispatcher public ---
+# --- Public dispatcher ---
 
 
 def call_llm(
@@ -285,9 +285,9 @@ def call_llm(
     max_tokens: int = 16000,
     extra_tools: list[dict] | None = None,
 ) -> LLMResponse:
-    """Appelle le LLM approprié selon le modèle demandé.
+    """Call the appropriate LLM based on the requested model.
 
-    Retourne une LLMResponse normalisée, quel que soit le provider.
+    Returns a normalized LLMResponse, regardless of the provider.
     """
     provider = detect_provider(model)
     extra = extra_tools or []

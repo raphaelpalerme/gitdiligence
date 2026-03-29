@@ -1,7 +1,4 @@
-"""Enregistrement de tous les outils dans le registre.
-
-Importer ce module suffit pour que tous les outils soient disponibles.
-"""
+"""Tool registration. Importing this module registers all tools."""
 
 from gitdiligence.tools import registry
 from gitdiligence.tools.github_contents import GetRepoInfo, GetFileTree, GetFileContent

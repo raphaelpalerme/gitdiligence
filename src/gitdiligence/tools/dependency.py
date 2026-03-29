@@ -1,7 +1,7 @@
-"""Outil d'analyse des dépendances d'un projet.
+"""Dependency analysis tool.
 
-Parse les fichiers de dépendances courants (pyproject.toml, package.json,
-requirements.txt) et retourne une liste structurée.
+Parses common dependency files (pyproject.toml, package.json,
+requirements.txt) and returns a structured list.
 """
 
 import json
@@ -11,21 +11,21 @@ from gitdiligence.tools.base import Tool
 
 
 def parse_requirements_txt(content: str) -> list[dict]:
-    """Parse un fichier requirements.txt."""
+    """Parse a requirements.txt file."""
     deps = []
     for line in content.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        # Sépare le nom du package de la version (ex: "flask>=2.0")
+        # Split package name from version (e.g. "flask>=2.0")
         match = re.match(r"^([a-zA-Z0-9_-]+)\s*([><=!~]+.+)?$", line)
         if match:
-            deps.append({"name": match.group(1), "version": match.group(2) or "non spécifiée"})
+            deps.append({"name": match.group(1), "version": match.group(2) or "unspecified"})
     return deps
 
 
 def parse_pyproject_toml(content: str) -> list[dict]:
-    """Parse les dépendances d'un pyproject.toml (section dependencies)."""
+    """Parse dependencies from a pyproject.toml (dependencies section)."""
     deps = []
     in_deps = False
     for line in content.splitlines():
@@ -36,15 +36,15 @@ def parse_pyproject_toml(content: str) -> list[dict]:
         if in_deps:
             if stripped == "]":
                 break
-            # Extrait "flask>=2.0" depuis '    "flask>=2.0",'
+            # Extract "flask>=2.0" from '    "flask>=2.0",'
             match = re.match(r'^\s*"([a-zA-Z0-9_-]+)\s*([><=!~]+[^"]*)?",?$', stripped)
             if match:
-                deps.append({"name": match.group(1), "version": match.group(2) or "non spécifiée"})
+                deps.append({"name": match.group(1), "version": match.group(2) or "unspecified"})
     return deps
 
 
 def parse_package_json(content: str) -> list[dict]:
-    """Parse les dépendances d'un package.json."""
+    """Parse dependencies from a package.json."""
     data = json.loads(content)
     deps = []
     for section in ["dependencies", "devDependencies"]:
@@ -53,7 +53,7 @@ def parse_package_json(content: str) -> list[dict]:
     return deps
 
 
-# Associe un nom de fichier à son parser
+# Map filename to its parser
 PARSERS = {
     "requirements.txt": parse_requirements_txt,
     "pyproject.toml": parse_pyproject_toml,
@@ -62,20 +62,20 @@ PARSERS = {
 
 
 class AnalyzeDependencies(Tool):
-    """Analyse le contenu d'un fichier de dépendances."""
+    """Analyze a dependency file and return a structured list of packages."""
 
     name = "analyze_dependencies"
-    description = "Analyse un fichier de dépendances et retourne la liste structurée des packages"
+    description = "Analyze a dependency file and return a structured list of packages"
     parameters = {
         "type": "object",
         "properties": {
             "filename": {
                 "type": "string",
-                "description": "Nom du fichier (requirements.txt, pyproject.toml, package.json)",
+                "description": "File name (requirements.txt, pyproject.toml, package.json)",
             },
             "content": {
                 "type": "string",
-                "description": "Contenu brut du fichier",
+                "description": "Raw file content",
             },
         },
         "required": ["filename", "content"],
@@ -87,7 +87,7 @@ class AnalyzeDependencies(Tool):
 
         parser = PARSERS.get(filename)
         if not parser:
-            return json.dumps({"error": f"Format non supporté : {filename}"})
+            return json.dumps({"error": f"Unsupported format: {filename}"})
 
         deps = parser(content)
         return json.dumps({"filename": filename, "count": len(deps), "dependencies": deps}, indent=2)

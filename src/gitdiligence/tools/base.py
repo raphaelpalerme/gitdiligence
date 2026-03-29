@@ -2,13 +2,13 @@ from abc import ABC, abstractmethod
 
 
 class Tool(ABC):
-    """Classe abstraite que chaque outil doit implémenter."""
+    """Abstract base class that every tool must implement."""
 
     name: str
     description: str
-    parameters: dict  # JSON Schema des paramètres attendus par l'outil
+    parameters: dict  # JSON Schema for the tool's expected parameters
 
     @abstractmethod
     def execute(self, **kwargs) -> str:
-        """Exécute l'outil avec les paramètres donnés et retourne le résultat en string."""
+        """Execute the tool with the given parameters and return the result as a string."""
         ...

@@ -4,15 +4,15 @@ _registry: dict[str, Tool] = {}
 
 
 def register(tool: Tool) -> None:
-    """Enregistre un outil dans le registre."""
+    """Register a tool in the registry."""
     _registry[tool.name] = tool
 
 
 def get_tool(name: str) -> Tool:
-    """Récupère un outil par son nom. Lève KeyError si introuvable."""
+    """Get a tool by name. Raises KeyError if not found."""
     return _registry[name]
 
 
 def all_tools() -> list[Tool]:
-    """Retourne la liste de tous les outils enregistrés."""
+    """Return all registered tools."""
     return list(_registry.values())

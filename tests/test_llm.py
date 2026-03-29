@@ -1,7 +1,7 @@
-"""Tests pour le client LLM multi-provider (llm/client.py).
+"""Tests for the multi-provider LLM client (llm/client.py).
 
-On teste les conversions de format et la détection de provider.
-On ne teste pas les appels API réels.
+We test format conversions and provider detection.
+We do not test real API calls.
 """
 
 from gitdiligence.tools.base import Tool
@@ -16,7 +16,7 @@ from gitdiligence.llm.client import (
 
 class FakeTool(Tool):
     name = "fake"
-    description = "Un faux outil"
+    description = "A fake tool"
     parameters = {
         "type": "object",
         "properties": {"msg": {"type": "string"}},
@@ -27,27 +27,27 @@ class FakeTool(Tool):
         return ""
 
 
-# --- Détection du provider ---
+# --- Provider detection ---
 
 
 def test_detect_provider_claude():
-    """Les modèles Claude sont détectés correctement."""
+    """Claude models are detected correctly."""
     assert detect_provider("claude-sonnet-4-6") == "claude"
     assert detect_provider("claude-haiku-4-5") == "claude"
     assert detect_provider("claude-opus-4-6") == "claude"
 
 
 def test_detect_provider_gemini():
-    """Les modèles Gemini sont détectés correctement."""
+    """Gemini models are detected correctly."""
     assert detect_provider("gemini-2.5-flash") == "gemini"
     assert detect_provider("gemini-2.0-flash") == "gemini"
 
 
-# --- Format Claude ---
+# --- Claude format ---
 
 
 def test_tools_to_claude_format():
-    """Vérifie le format Claude (input_schema)."""
+    """Verify the Claude format (input_schema)."""
     result = tools_to_claude_format([FakeTool()])
 
     assert len(result) == 1
@@ -56,11 +56,11 @@ def test_tools_to_claude_format():
     assert "msg" in result[0]["input_schema"]["properties"]
 
 
-# --- Format Gemini ---
+# --- Gemini format ---
 
 
 def test_tools_to_gemini_format():
-    """Vérifie le format Gemini (parameters au lieu de input_schema)."""
+    """Verify the Gemini format (parameters instead of input_schema)."""
     result = tools_to_gemini_format([FakeTool()])
 
     assert len(result) == 1
@@ -70,8 +70,8 @@ def test_tools_to_gemini_format():
 
 
 def test_extra_tools_to_gemini():
-    """Vérifie la conversion des extra_tools (format Claude → Gemini)."""
-    extra = [{"name": "report", "description": "Génère un rapport", "input_schema": {"type": "object"}}]
+    """Verify the conversion of extra_tools (Claude format to Gemini)."""
+    extra = [{"name": "report", "description": "Generate a report", "input_schema": {"type": "object"}}]
     result = _extra_tools_to_gemini(extra)
 
     assert result[0]["name"] == "report"
@@ -79,11 +79,11 @@ def test_extra_tools_to_gemini():
     assert "input_schema" not in result[0]
 
 
-# --- Resolve refs ---
+# --- Resolve $refs ---
 
 
 def test_resolve_refs():
-    """Vérifie que les $ref sont inlinées et $defs supprimé."""
+    """Verify that $ref are inlined and $defs removed."""
     schema = {
         "type": "object",
         "properties": {
@@ -105,22 +105,22 @@ def test_resolve_refs():
 
 
 def test_resolve_refs_no_defs():
-    """Un schema sans $defs est retourné tel quel."""
+    """A schema without $defs is returned as-is."""
     schema = {"type": "object", "properties": {"x": {"type": "string"}}}
     resolved = _resolve_refs(schema)
     assert resolved == {"type": "object", "properties": {"x": {"type": "string"}}}
 
 
-# --- Multi-tools ---
+# --- Multiple tools ---
 
 
 def test_multiple_tools_claude():
-    """Plusieurs outils sont convertis correctement pour Claude."""
+    """Multiple tools are converted correctly for Claude."""
     result = tools_to_claude_format([FakeTool(), FakeTool()])
     assert len(result) == 2
 
 
 def test_multiple_tools_gemini():
-    """Plusieurs outils sont convertis correctement pour Gemini."""
+    """Multiple tools are converted correctly for Gemini."""
     result = tools_to_gemini_format([FakeTool(), FakeTool()])
     assert len(result) == 2

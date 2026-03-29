@@ -1,11 +1,11 @@
-"""Tests pour le rendu Markdown (report/renderer.py)."""
+"""Tests for the Markdown rendering (report/renderer.py)."""
 
 from gitdiligence.report.schema import DiligenceReport, Dimension, Finding, RepoInfo
 from gitdiligence.report.renderer import render_markdown
 
 
 def _make_report():
-    """Crée un rapport de test."""
+    """Create a test report."""
     return DiligenceReport(
         repo_info=RepoInfo(
             name="flask", owner="pallets", stars=71000, forks=16000,
@@ -31,26 +31,26 @@ def _make_report():
 
 
 def test_render_contains_header():
-    """Le Markdown contient le titre avec owner/repo."""
+    """The Markdown contains the title with owner/repo."""
     md = render_markdown(_make_report())
     assert "# Due Diligence: pallets/flask" in md
 
 
 def test_render_contains_dimensions():
-    """Le Markdown contient les dimensions avec leur score."""
+    """The Markdown contains the dimensions with their score."""
     md = render_markdown(_make_report())
     assert "(8/10)" in md
 
 
 def test_render_contains_findings():
-    """Le Markdown contient les findings avec + et -."""
+    """The Markdown contains the findings with + and -."""
     md = render_markdown(_make_report())
     assert "+ Bon point" in md
     assert "- Point faible" in md
 
 
 def test_render_contains_verdict():
-    """Le Markdown contient le verdict final."""
+    """The Markdown contains the final verdict."""
     md = render_markdown(_make_report())
     assert "Strong Invest" in md
     assert "Excellent projet." in md
