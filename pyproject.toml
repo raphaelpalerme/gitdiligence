@@ -12,7 +12,7 @@ dependencies = [
     "google-genai>=1.0",
     "httpx>=0.28",
     "pydantic>=2.12",
-    "typer>=0.24",
+    "typer>=0.24.1",
     "rich>=14.0",
 ]
 
