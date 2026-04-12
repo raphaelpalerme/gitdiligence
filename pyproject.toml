@@ -9,7 +9,7 @@ description = "Agent IA de due diligence technique pour repos GitHub"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.86",
-    "google-genai>=1.0",
+    "google-genai>=1.72.0",
     "httpx>=0.28",
     "pydantic>=2.12",
     "typer>=0.24",
